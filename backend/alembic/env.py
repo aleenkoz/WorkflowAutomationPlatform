@@ -1,12 +1,11 @@
 import os
 import sys
 from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
 # ---------------------------------------------------------
-# Load Alembic configuration
+# Alembic Config
 # ---------------------------------------------------------
 config = context.config
 
@@ -14,15 +13,28 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # ---------------------------------------------------------
-# Fix Python path so Alembic can import app/*
+# Add backend/ to Python path so Alembic can import app/*
 # ---------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # backend/
 sys.path.insert(0, BASE_DIR)
 
 # ---------------------------------------------------------
-# Import SQLAlchemy Base
+# Import Base and ALL models (to register metadata)
 # ---------------------------------------------------------
 from app.database.base import Base
+
+# Import all models so Alembic sees them
+from app.models.projects import (
+    Project,
+    ProjectPhase,
+    ProjectMilestone,
+    ProjectBudget,
+    ProjectRisk,
+    ProjectIssue,
+    ProjectDecision,
+)
+
+# Alembic needs this metadata to autogenerate migrations
 target_metadata = Base.metadata
 
 
@@ -30,6 +42,7 @@ target_metadata = Base.metadata
 # Offline migrations
 # ---------------------------------------------------------
 def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
 
     context.configure(
@@ -47,6 +60,7 @@ def run_migrations_offline() -> None:
 # Online migrations
 # ---------------------------------------------------------
 def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
     configuration = config.get_section(config.config_ini_section) or {}
 
     connectable = engine_from_config(

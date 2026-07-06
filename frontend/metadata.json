@@ -1,0 +1,6 @@
+{
+  "name": "Construction Projects Module",
+  "description": "A comprehensive intelligence and management dashboard for construction projects, tracking development phases, milestones, budgets, risk registries, and change-orders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

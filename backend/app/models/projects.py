@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey, Numeric, Boolean
 from sqlalchemy.orm import relationship
-from app.databse.base import Base
+from app.database.base import Base
 
 """
 This module defines the SQLAlchemy models for the project management system, 
