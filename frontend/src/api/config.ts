@@ -22,7 +22,7 @@ export function setApiUrl(url: string) {
 }
 
 export function getApiMode(): 'mock' | 'api' {
-  return (localStorage.getItem(API_MODE_KEY) as 'mock' | 'api') || 'mock';
+  return (localStorage.getItem(API_MODE_KEY) as 'mock' | 'api') || 'api';
 }
 
 export function setApiMode(mode: 'mock' | 'api') {

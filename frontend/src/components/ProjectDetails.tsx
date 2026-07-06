@@ -100,9 +100,93 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     }
   };
 
+  const [tabLoading, setTabLoading] = useState(false);
+
+  const fetchActiveTabData = async (targetTab: TabType) => {
+    if (!projectId) return;
+    setTabLoading(true);
+    try {
+      switch (targetTab) {
+        case 'phases': {
+          const data = await getPhases(projectId);
+          setPhases(data);
+          break;
+        }
+        case 'milestones': {
+          const data = await getMilestones(projectId);
+          setMilestones(data);
+          break;
+        }
+        case 'budgets': {
+          const data = await getBudgets(projectId);
+          setBudgets(data);
+          break;
+        }
+        case 'risks': {
+          const data = await getRisks(projectId);
+          setRisks(data);
+          break;
+        }
+        case 'issues': {
+          const data = await getIssues(projectId);
+          setIssues(data);
+          break;
+        }
+        case 'decisions': {
+          const data = await getDecisions(projectId);
+          setDecisions(data);
+          break;
+        }
+        case 'overview': {
+          const [phasesData, milestonesData, budgetsData, risksData, issuesData, decisionsData] = await Promise.all([
+            getPhases(projectId),
+            getMilestones(projectId),
+            getBudgets(projectId),
+            getRisks(projectId),
+            getIssues(projectId),
+            getDecisions(projectId)
+          ]);
+          setPhases(phasesData);
+          setMilestones(milestonesData);
+          setBudgets(budgetsData);
+          setRisks(risksData);
+          setIssues(issuesData);
+          setDecisions(decisionsData);
+          break;
+        }
+      }
+    } catch (err: any) {
+      console.error('Error loading tab data:', err);
+    } finally {
+      setTabLoading(false);
+    }
+  };
+
   useEffect(() => {
-    loadAllData();
+    if (projectId) {
+      setIsLoading(true);
+      setError(null);
+      getProject(projectId)
+        .then((projData) => {
+          setProject(projData);
+          // Initial fetch of active tab
+          fetchActiveTabData(activeTab);
+        })
+        .catch((err: any) => {
+          console.error(err);
+          setError(err.message || 'Failed to fetch project data. Please verify the API is accessible.');
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
   }, [projectId]);
+
+  useEffect(() => {
+    if (project) {
+      fetchActiveTabData(activeTab);
+    }
+  }, [activeTab]);
 
   if (isLoading) {
     return (
@@ -127,7 +211,21 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
             Return to Dashboard
           </button>
           <button
-            onClick={loadAllData}
+            onClick={() => {
+              setIsLoading(true);
+              setError(null);
+              getProject(projectId)
+                .then((projData) => {
+                  setProject(projData);
+                  fetchActiveTabData(activeTab);
+                })
+                .catch((err: any) => {
+                  setError(err.message);
+                })
+                .finally(() => {
+                  setIsLoading(false);
+                });
+            }}
             className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors cursor-pointer"
           >
             Retry Connection
@@ -151,7 +249,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     setSubmitting(true);
     try {
       await addPhase(projectId, data);
-      await loadAllData();
+      await fetchActiveTabData('phases');
       setShowPhaseModal(false);
     } catch (err: any) {
       alert('Error adding phase: ' + err.message);
@@ -164,7 +262,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     setSubmitting(true);
     try {
       await addMilestone(projectId, data);
-      await loadAllData();
+      await fetchActiveTabData('milestones');
       setShowMilestoneModal(false);
     } catch (err: any) {
       alert('Error adding milestone: ' + err.message);
@@ -189,7 +287,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     setSubmitting(true);
     try {
       await addBudget(projectId, data);
-      await loadAllData();
+      await fetchActiveTabData('budgets');
       setShowBudgetModal(false);
     } catch (err: any) {
       alert('Error adding budget: ' + err.message);
@@ -202,7 +300,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     setSubmitting(true);
     try {
       await addRisk(projectId, data);
-      await loadAllData();
+      await fetchActiveTabData('risks');
       setShowRiskModal(false);
     } catch (err: any) {
       alert('Error adding risk: ' + err.message);
@@ -215,7 +313,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     setSubmitting(true);
     try {
       await addIssue(projectId, data);
-      await loadAllData();
+      await fetchActiveTabData('issues');
       setShowIssueModal(false);
     } catch (err: any) {
       alert('Error adding issue: ' + err.message);
@@ -228,7 +326,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     setSubmitting(true);
     try {
       await addDecision(projectId, data);
-      await loadAllData();
+      await fetchActiveTabData('decisions');
       setShowDecisionModal(false);
     } catch (err: any) {
       alert('Error adding decision: ' + err.message);
@@ -242,7 +340,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     if (confirm('Delete this project phase?')) {
       try {
         await deletePhase(id);
-        await loadAllData();
+        await fetchActiveTabData('phases');
       } catch (err: any) {
         alert('Failed to delete phase: ' + err.message);
       }
@@ -253,7 +351,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     if (confirm('Delete this milestone?')) {
       try {
         await deleteMilestone(id);
-        await loadAllData();
+        await fetchActiveTabData('milestones');
       } catch (err: any) {
         alert('Failed to delete milestone: ' + err.message);
       }
@@ -264,7 +362,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     if (confirm('Delete this budget item?')) {
       try {
         await deleteBudget(id);
-        await loadAllData();
+        await fetchActiveTabData('budgets');
       } catch (err: any) {
         alert('Failed to delete budget: ' + err.message);
       }
@@ -275,7 +373,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     if (confirm('Delete this risk record?')) {
       try {
         await deleteRisk(id);
-        await loadAllData();
+        await fetchActiveTabData('risks');
       } catch (err: any) {
         alert('Failed to delete risk: ' + err.message);
       }
@@ -286,7 +384,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     if (confirm('Delete this issue record?')) {
       try {
         await deleteIssue(id);
-        await loadAllData();
+        await fetchActiveTabData('issues');
       } catch (err: any) {
         alert('Failed to delete issue: ' + err.message);
       }
@@ -297,7 +395,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
     if (confirm('Delete this decision record?')) {
       try {
         await deleteDecision(id);
-        await loadAllData();
+        await fetchActiveTabData('decisions');
       } catch (err: any) {
         alert('Failed to delete decision: ' + err.message);
       }
