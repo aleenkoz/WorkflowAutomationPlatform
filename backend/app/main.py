@@ -1,18 +1,44 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+# Import your API routers
+from app.api.v1.projects import router as projects_router
 
-# Specify the frontend addresses allowed to communicate with your backend
+app = FastAPI(
+    title="Construction Operations Intelligence Platform",
+    version="1.0.0",
+)
+
+# ---------------------------
+# 1. Include Routers
+# ---------------------------
+# This exposes:
+# POST /api/v1/projects
+# GET /api/v1/projects/{project_id}
+# POST /api/v1/projects/{project_id}/risks
+app.include_router(projects_router)
+
+
+# ---------------------------
+# 2. CORS Configuration
+# ---------------------------
 origins = [
-    "http://localhost:3000",  # Default local port for this frontend
-    "https://*.run.app",       # For preview environments if running on cloud servers
+    "http://localhost:3000",   # React local dev
+    "https://*.run.app",       # Cloud preview environments
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For quick local testing, you can use ["*"], but specify origins in production
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------
+# 3. Health Check Endpoint
+# ---------------------------
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "FastAPI backend is running"}
