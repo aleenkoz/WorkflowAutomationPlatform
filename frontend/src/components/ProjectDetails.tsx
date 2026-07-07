@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Project, Phase, Milestone, Budget, Risk, Issue, Decision } from '../types';
 import { getProject } from '../api/projects';
+import { setApiMode } from '../api/config';
 import { getPhases, addPhase, deletePhase } from '../api/phases';
 import { getMilestones, addMilestone, toggleMilestone, deleteMilestone } from '../api/milestones';
 import { getBudgets, addBudget, deleteBudget } from '../api/budgets';
@@ -229,6 +230,15 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
             className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors cursor-pointer"
           >
             Retry Connection
+          </button>
+          <button
+            onClick={() => {
+              setApiMode('mock');
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer shadow-sm"
+          >
+            Use Demo Mode
           </button>
         </div>
       </div>

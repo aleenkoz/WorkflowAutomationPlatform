@@ -8,6 +8,7 @@ import { Project } from '../types';
 import { getProjects, deleteProject } from '../api/projects';
 import { getApiMode, setApiMode, getApiUrl, setApiUrl } from '../api/config';
 import ProjectTable from '../components/ProjectTable';
+import AIIntelligenceCenter from '../components/AIIntelligenceCenter';
 import { 
   Plus, 
   Search, 
@@ -244,6 +245,9 @@ export default function ProjectsDashboard({
         </form>
       )}
 
+      {/* AI Intelligence Desk */}
+      <AIIntelligenceCenter onViewProject={onViewProjectClick} projects={projects} />
+
       {/* Filter and Search Controls */}
       <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded border border-slate-200 shadow-sm">
         {/* Search input */}
@@ -282,16 +286,27 @@ export default function ProjectsDashboard({
           <p className="text-gray-500 font-medium text-sm">Loading project logs...</p>
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center max-w-lg mx-auto">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center max-w-lg mx-auto shadow-sm">
           <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-2" />
-          <p className="text-red-700 font-semibold">Failed to fetch data</p>
-          <p className="text-red-600 text-xs mt-1 leading-relaxed">{error}</p>
-          <button
-            onClick={loadProjects}
-            className="mt-4 px-4 py-1.5 bg-white border border-red-200 rounded-lg text-xs font-semibold text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
-          >
-            Retry Connection
-          </button>
+          <p className="text-red-700 font-semibold">Backend Connection Issue</p>
+          <p className="text-red-600 text-xs mt-2 leading-relaxed">{error}</p>
+          <div className="mt-5 flex gap-3 justify-center">
+            <button
+              onClick={loadProjects}
+              className="px-4 py-2 bg-white border border-red-200 rounded text-xs font-semibold text-red-700 hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              Retry Connection
+            </button>
+            <button
+              onClick={() => {
+                setApiModeState('mock');
+                setApiMode('mock');
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Use In-Browser Demo Mode
+            </button>
+          </div>
         </div>
       ) : (
         <ProjectTable

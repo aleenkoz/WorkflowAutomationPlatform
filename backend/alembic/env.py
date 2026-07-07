@@ -29,7 +29,6 @@ from app.models.projects import (
     ProjectPhase,
     ProjectMilestone,
     ProjectBudget,
-    ProjectRisk,
     ProjectIssue,
     ProjectDecision,
 )

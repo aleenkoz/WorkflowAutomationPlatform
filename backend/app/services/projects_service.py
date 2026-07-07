@@ -1,36 +1,30 @@
 from sqlalchemy.orm import Session
-from app.models.projects import Project, ProjectRisk
-from app.schemas.projects import ProjectCreate, ProjectRiskCreate
-
-"""
-This module provides service functions for managing projects and their associated risks.
-"""
-
-def create_project(db: Session, data: ProjectCreate) -> Project:
-    project = Project(**data.dict())
-    db.add(project)
-    db.commit()
-    db.refresh(project)
-    return project
-
-
-def get_project(db: Session, project_id: int) -> Project | None:
-    return db.query(Project).filter(Project.id == project_id).first()
-
-
-def add_project_risk(db: Session, project_id: int, data: ProjectRiskCreate) -> ProjectRisk:
-    risk = ProjectRisk(project_id=project_id, **data.dict())
-    db.add(risk)
-    db.commit()
-    db.refresh(risk)
-    return risk
+from app.models.projects import Project
+from app.schemas.projects import ProjectCreate
 
 def list_projects(db: Session):
     return db.query(Project).all()
 
-def delete_project(db: Session, project_id: int):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if project:
-        db.delete(project)
-        db.commit()
+def get_project(db: Session, project_id: int):
+    return db.query(Project).filter(Project.id == project_id).first()
 
+def delete_project(db: Session, project_id: int):
+    project = get_project(db, project_id)
+    if not project:
+        return False
+    db.delete(project)
+    db.commit()
+    return True
+
+
+def create_project(db: Session, payload: ProjectCreate):
+    project = Project(
+        name=payload.name,
+        description=payload.description,
+        status=payload.status,
+        client_name=payload.client_name
+    )
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+    return project

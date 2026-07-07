@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Import your API routers
 from app.api.v1.projects import router as projects_router
+from app.api.v1.ai_copilot import router as ai_router
+from app.api.v1.risk_detection import router as risk_router
+
 
 app = FastAPI(
     title="Construction Operations Intelligence Platform",
@@ -42,3 +45,6 @@ app.add_middleware(
 @app.get("/")
 def root():
     return {"status": "ok", "message": "FastAPI backend is running"}
+
+app.include_router(ai_router)
+app.include_router(risk_router)

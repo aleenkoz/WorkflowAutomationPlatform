@@ -70,6 +70,26 @@ export interface Decision {
   reference: string;
 }
 
+export interface DetectedRisk {
+  id: number;
+  project_id: number | string;
+  email_id: number | string;
+  risk_type: string;
+  severity: 'Low' | 'Medium' | 'High';
+  description: string;
+  detected_at: string;
+}
+
+export interface RiskDetectionResponse {
+  total_emails: number;
+  risks_detected: number;
+  risks: DetectedRisk[];
+}
+
+export interface ProjectSummaryResponse {
+  summary: string;
+}
+
 export interface MockDatabase {
   projects: Project[];
   phases: Phase[];
