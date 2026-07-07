@@ -8,7 +8,7 @@ class Project(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)
-    status = Column(String(50), nullable=False, default="Active")
+    status = Column(String(50), nullable=False, default="Planned")
     client_name = Column(String(255), nullable=True)
     location = Column(String(255), nullable=True)
     start_date = Column(String(50), nullable=True)  
