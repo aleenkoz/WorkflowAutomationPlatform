@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { axiosInstance, getApiMode, getMockDb, saveMockDb } from './config';
+import { apiClient, getApiMode, getMockDb, saveMockDb } from './config';
 import { Phase } from '../types';
 
 export const getPhases = async (projectId: string): Promise<Phase[]> => {
   if (getApiMode() === 'mock') {
     return getMockDb().phases.filter((p) => p.project_id === projectId);
   }
-  const response = await axiosInstance.get<Phase[]>(`/projects/${projectId}/phases`);
+  const response = await apiClient.get<Phase[]>(`/api/v1/projects/${projectId}/phases`);
   return response.data;
 };
 
@@ -26,16 +26,16 @@ export const addPhase = async (projectId: string, phaseData: Omit<Phase, 'id' | 
     saveMockDb(db);
     return newPhase;
   }
-  const response = await axiosInstance.post<Phase>(`/projects/${projectId}/phases`, phaseData);
+  const response = await apiClient.post<Phase>(`/api/v1/projects/${projectId}/phases`, phaseData);
   return response.data;
 };
 
-export const deletePhase = async (phaseId: string): Promise<void> => {
+export const deletePhase = async (projectId: string | number, phaseId: string): Promise<void> => {
   if (getApiMode() === 'mock') {
     const db = getMockDb();
     db.phases = db.phases.filter((p) => p.id !== phaseId);
     saveMockDb(db);
     return;
   }
-  await axiosInstance.delete(`/phases/${phaseId}`);
+  await apiClient.delete(`/api/v1/projects/${projectId}/phases/${phaseId}`);
 };

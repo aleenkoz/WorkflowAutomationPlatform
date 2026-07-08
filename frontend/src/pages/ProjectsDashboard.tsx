@@ -211,7 +211,7 @@ export default function ProjectsDashboard({
                 id="apiUrl"
                 value={apiUrl}
                 onChange={(e) => setApiUrlState(e.target.value)}
-                placeholder="http://localhost:8000/api/v1"
+                placeholder="http://localhost:8000"
                 disabled={apiMode === 'mock'}
                 className="w-full text-xs rounded border border-slate-200 px-3 py-2 text-slate-800 shadow-xs focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-hidden transition-colors bg-white disabled:bg-slate-50 disabled:text-slate-400"
               />
@@ -246,7 +246,9 @@ export default function ProjectsDashboard({
       )}
 
       {/* AI Intelligence Desk */}
-      <AIIntelligenceCenter onViewProject={onViewProjectClick} projects={projects} />
+      <div key={apiMode}>
+        <AIIntelligenceCenter onViewProject={onViewProjectClick} projects={projects} />
+      </div>
 
       {/* Filter and Search Controls */}
       <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded border border-slate-200 shadow-sm">

@@ -25,4 +25,11 @@ class Project(Base):
     back_populates="project",
     cascade="all, delete"
     )
+    meetings = relationship("Meeting",
+    back_populates="project", 
+    cascade="all, delete-orphan")
+
+    memory_entries = relationship("MemoryEntry",
+    back_populates="project",
+    cascade="all, delete-orphan")
 

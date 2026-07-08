@@ -20,6 +20,9 @@ import BudgetForm from './BudgetForm';
 import RiskForm from './RiskForm';
 import IssueForm from './IssueForm';
 import DecisionForm from './DecisionForm';
+import WeeklyMeetingSummary from './WeeklyMeetingSummary';
+import ProjectIntelligence from './ProjectIntelligence';
+import ProjectMemory from './ProjectMemory';
 
 import {
   Briefcase,
@@ -38,7 +41,8 @@ import {
   FileText,
   User,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 
 interface ProjectDetailsProps {
@@ -47,7 +51,7 @@ interface ProjectDetailsProps {
   onEdit: (project: Project) => void;
 }
 
-type TabType = 'overview' | 'phases' | 'milestones' | 'budgets' | 'risks' | 'issues' | 'decisions';
+type TabType = 'overview' | 'phases' | 'milestones' | 'budgets' | 'risks' | 'issues' | 'decisions' | 'weekly_summary';
 
 export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDetailsProps) {
   const [project, setProject] = useState<Project | null>(null);
@@ -61,6 +65,9 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Trigger state to coordinate intelligence regeneration with memory layer refresh
+  const [memoryRefreshTrigger, setMemoryRefreshTrigger] = useState(0);
 
   // Modal display states
   const [showPhaseModal, setShowPhaseModal] = useState(false);
@@ -139,7 +146,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
           break;
         }
         case 'overview': {
-          const [phasesData, milestonesData, budgetsData, risksData, issuesData, decisionsData] = await Promise.all([
+          const results = await Promise.allSettled([
             getPhases(projectId),
             getMilestones(projectId),
             getBudgets(projectId),
@@ -147,12 +154,12 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
             getIssues(projectId),
             getDecisions(projectId)
           ]);
-          setPhases(phasesData);
-          setMilestones(milestonesData);
-          setBudgets(budgetsData);
-          setRisks(risksData);
-          setIssues(issuesData);
-          setDecisions(decisionsData);
+          if (results[0].status === 'fulfilled') setPhases(results[0].value);
+          if (results[1].status === 'fulfilled') setMilestones(results[1].value);
+          if (results[2].status === 'fulfilled') setBudgets(results[2].value);
+          if (results[3].status === 'fulfilled') setRisks(results[3].value);
+          if (results[4].status === 'fulfilled') setIssues(results[4].value);
+          if (results[5].status === 'fulfilled') setDecisions(results[5].value);
           break;
         }
       }
@@ -231,24 +238,23 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
           >
             Retry Connection
           </button>
-          <button
-            onClick={() => {
-              setApiMode('mock');
-              window.location.reload();
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer shadow-sm"
-          >
-            Use Demo Mode
-          </button>
         </div>
       </div>
     );
   }
 
   // Helper values for calculations
-  const totalAllocated = budgets.reduce((acc, curr) => acc + curr.allocated, 0);
-  const totalSpent = budgets.reduce((acc, curr) => acc + curr.spent, 0);
-  const budgetUtilization = totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0;
+  const allocatedVal = budgets?.reduce((sum, b: any) => sum + Number(b.amount !== undefined ? b.amount : (b.allocated || 0)), 0) || 0;
+  const allocated = isNaN(allocatedVal) ? 0 : allocatedVal;
+  const spent = 0; // until expenditures table exists
+  const remainingVal = allocated - spent;
+  const remaining = isNaN(remainingVal) ? 0 : remainingVal;
+  const utilizationVal = allocated > 0 ? (spent / allocated) * 100 : 0;
+  const utilization = isNaN(utilizationVal) ? 0 : utilizationVal;
+
+  const totalAllocated = allocated;
+  const totalSpent = spent;
+  const budgetUtilization = utilization;
 
   const openRisksCount = risks.filter((r) => r.status === 'Open').length;
   const openIssuesCount = issues.filter((i) => i.status === 'Open').length;
@@ -283,7 +289,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
 
   const handleToggleMilestone = async (id: string) => {
     try {
-      await toggleMilestone(id);
+      await toggleMilestone(projectId, id);
       // Fast optimistic state update, then re-load
       setMilestones((prev) =>
         prev.map((m) => (m.id === id ? { ...m, completed: !m.completed } : m))
@@ -349,7 +355,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
   const handleDeletePhase = async (id: string) => {
     if (confirm('Delete this project phase?')) {
       try {
-        await deletePhase(id);
+        await deletePhase(projectId, id);
         await fetchActiveTabData('phases');
       } catch (err: any) {
         alert('Failed to delete phase: ' + err.message);
@@ -360,7 +366,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
   const handleDeleteMilestone = async (id: string) => {
     if (confirm('Delete this milestone?')) {
       try {
-        await deleteMilestone(id);
+        await deleteMilestone(projectId, id);
         await fetchActiveTabData('milestones');
       } catch (err: any) {
         alert('Failed to delete milestone: ' + err.message);
@@ -371,7 +377,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
   const handleDeleteBudget = async (id: string) => {
     if (confirm('Delete this budget item?')) {
       try {
-        await deleteBudget(id);
+        await deleteBudget(projectId, id);
         await fetchActiveTabData('budgets');
       } catch (err: any) {
         alert('Failed to delete budget: ' + err.message);
@@ -382,7 +388,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
   const handleDeleteRisk = async (id: string) => {
     if (confirm('Delete this risk record?')) {
       try {
-        await deleteRisk(id);
+        await deleteRisk(projectId, id);
         await fetchActiveTabData('risks');
       } catch (err: any) {
         alert('Failed to delete risk: ' + err.message);
@@ -393,7 +399,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
   const handleDeleteIssue = async (id: string) => {
     if (confirm('Delete this issue record?')) {
       try {
-        await deleteIssue(id);
+        await deleteIssue(projectId, id);
         await fetchActiveTabData('issues');
       } catch (err: any) {
         alert('Failed to delete issue: ' + err.message);
@@ -404,7 +410,7 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
   const handleDeleteDecision = async (id: string) => {
     if (confirm('Delete this decision record?')) {
       try {
-        await deleteDecision(id);
+        await deleteDecision(projectId, id);
         await fetchActiveTabData('decisions');
       } catch (err: any) {
         alert('Failed to delete decision: ' + err.message);
@@ -486,29 +492,11 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
             </div>
 
             {/* Quick KPI stats banner inside project header */}
-            <div className="grid grid-cols-2 xs:grid-cols-4 md:grid-cols-1 gap-4 md:w-64 flex-shrink-0 bg-slate-50 border border-slate-200 p-4 rounded">
-              <div className="space-y-1">
-                <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Budget Spent</div>
-                <div className="text-lg font-bold text-slate-800">
-                  ${totalSpent.toLocaleString()} <span className="text-xs font-normal text-slate-500">/ ${totalAllocated.toLocaleString()}</span>
-                </div>
-                <div className="w-full bg-slate-200 h-1.5 rounded-sm overflow-hidden">
-                  <div 
-                    className={`h-full rounded-sm ${budgetUtilization > 90 ? 'bg-red-500' : budgetUtilization > 75 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
-                    style={{ width: `${Math.min(budgetUtilization, 100)}%` }} 
-                  />
-                </div>
-              </div>
-              <div className="flex items-center justify-between md:border-t md:border-slate-200 md:pt-2.5 mt-0.5">
-                <span className="text-xs text-slate-500 font-medium">Open Issues</span>
-                <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold ${openIssuesCount > 0 ? 'bg-red-100 text-red-750' : 'bg-slate-200 text-slate-600'}`}>
+            <div className="flex items-center gap-4 flex-shrink-0 bg-slate-50 border border-slate-200 p-4 rounded h-fit self-start md:self-center">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Open Issues</span>
+                <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded text-xs font-bold ${openIssuesCount > 0 ? 'bg-red-100 text-red-700' : 'bg-slate-200 text-slate-600'}`}>
                   {openIssuesCount}
-                </span>
-              </div>
-              <div className="flex items-center justify-between md:pt-1">
-                <span className="text-xs text-slate-500 font-medium">Critical Risks</span>
-                <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold ${openRisksCount > 0 ? 'bg-amber-100 text-amber-800 font-semibold' : 'bg-slate-200 text-slate-600'}`}>
-                  {openRisksCount}
                 </span>
               </div>
             </div>
@@ -525,7 +513,8 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
               { id: 'budgets', label: 'Budgets & Costs', icon: DollarSign },
               { id: 'risks', label: `Risks (${risks.length})`, icon: AlertTriangle },
               { id: 'issues', label: `Issues (${issues.length})`, icon: AlertCircle },
-              { id: 'decisions', label: `Decisions (${decisions.length})`, icon: FileText }
+              { id: 'decisions', label: `Decisions (${decisions.length})`, icon: FileText },
+              { id: 'weekly_summary', label: 'Weekly Summary', icon: Sparkles }
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -587,6 +576,21 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
                   </div>
                 </div>
               </div>
+
+              {/* Project Intelligence section */}
+              <ProjectIntelligence 
+                projectId={projectId} 
+                onRegenerated={() => setMemoryRefreshTrigger(prev => prev + 1)} 
+              />
+
+              {/* Enterprise Memory Layer section */}
+              <ProjectMemory 
+                projectId={projectId} 
+                refreshTrigger={memoryRefreshTrigger} 
+              />
+
+              {/* Weekly Meeting Summary section */}
+              <WeeklyMeetingSummary projectId={projectId} />
             </div>
 
             {/* Quick dashboard right column summary */}
@@ -600,29 +604,25 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">Allocated Budget</span>
-                    <span className="font-bold text-gray-900">${totalAllocated.toLocaleString()}</span>
+                    <span className="font-bold text-gray-900">${Number(totalAllocated || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Total Spent to Date</span>
-                    <span className="font-bold text-gray-900">${totalSpent.toLocaleString()}</span>
+                    <span className="text-gray-500">Remaining Cash</span>
+                    <span className={`font-bold ${totalAllocated - totalSpent >= 0 ? 'text-emerald-700' : 'text-red-650'}`}>
+                      ${Number((totalAllocated - totalSpent) || 0).toLocaleString()}
+                    </span>
                   </div>
                   <div className="border-t border-gray-100 pt-3">
                     <div className="flex items-center justify-between text-xs font-bold uppercase text-gray-400 mb-1.5">
-                      <span>Utilization</span>
-                      <span>{budgetUtilization.toFixed(1)}%</span>
+                      <span>Utilization %</span>
+                      <span>{(isNaN(budgetUtilization) ? 0 : budgetUtilization).toFixed(1)}%</span>
                     </div>
                     <div className="w-full bg-gray-150 h-2.5 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full rounded-full ${budgetUtilization > 90 ? 'bg-red-500' : budgetUtilization > 75 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
-                        style={{ width: `${Math.min(budgetUtilization, 100)}%` }} 
+                        className={`h-full rounded-full ${(isNaN(budgetUtilization) ? 0 : budgetUtilization) > 90 ? 'bg-red-500' : (isNaN(budgetUtilization) ? 0 : budgetUtilization) > 75 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                        style={{ width: `${Math.min((isNaN(budgetUtilization) ? 0 : budgetUtilization), 100)}%` }} 
                       />
                     </div>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-150 flex items-center justify-between text-sm">
-                    <span className="text-gray-600 font-medium">Remaining Cash</span>
-                    <span className={`font-bold ${totalAllocated - totalSpent >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                      ${(totalAllocated - totalSpent).toLocaleString()}
-                    </span>
                   </div>
                 </div>
               </div>
@@ -826,16 +826,16 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-gray-50 p-4 border border-gray-150 rounded-xl">
                     <span className="block text-xs font-bold text-gray-450 uppercase mb-1">Total Allocation</span>
-                    <span className="text-xl font-bold text-gray-900">${totalAllocated.toLocaleString()}</span>
+                    <span className="text-xl font-bold text-gray-900">${Number(totalAllocated || 0).toLocaleString()}</span>
                   </div>
                   <div className="bg-gray-50 p-4 border border-gray-150 rounded-xl">
                     <span className="block text-xs font-bold text-gray-455 uppercase mb-1">Total Expensed</span>
-                    <span className="text-xl font-bold text-gray-900">${totalSpent.toLocaleString()}</span>
+                    <span className="text-xl font-bold text-gray-900">${Number(totalSpent || 0).toLocaleString()}</span>
                   </div>
                   <div className="bg-gray-50 p-4 border border-gray-150 rounded-xl">
                     <span className="block text-xs font-bold text-gray-450 uppercase mb-1">Variance remaining</span>
                     <span className={`text-xl font-bold ${totalAllocated - totalSpent >= 0 ? 'text-emerald-700' : 'text-red-650'}`}>
-                      ${(totalAllocated - totalSpent).toLocaleString()}
+                      ${Number((totalAllocated - totalSpent) || 0).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -854,17 +854,22 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-gray-700">
                       {budgets.map((budget) => {
-                        const balance = budget.allocated - budget.spent;
+                        const budgetAllocatedVal = Number((budget as any).amount !== undefined ? (budget as any).amount : (budget.allocated || 0));
+                        const budgetAllocated = isNaN(budgetAllocatedVal) ? 0 : budgetAllocatedVal;
+                        const budgetSpentVal = Number(budget.spent || 0);
+                        const budgetSpent = isNaN(budgetSpentVal) ? 0 : budgetSpentVal;
+                        const balanceVal = budgetAllocated - budgetSpent;
+                        const balance = isNaN(balanceVal) ? 0 : balanceVal;
                         return (
                           <tr key={budget.id} className="hover:bg-gray-50/50">
                             <td className="px-4 py-3.5 font-semibold text-gray-900">{budget.category}</td>
                             <td className="px-4 py-3.5 text-xs text-gray-500 max-w-xs truncate" title={budget.description}>
                               {budget.description || '—'}
                             </td>
-                            <td className="px-4 py-3.5 text-right font-medium">${budget.allocated.toLocaleString()}</td>
-                            <td className="px-4 py-3.5 text-right font-medium text-gray-600">${budget.spent.toLocaleString()}</td>
+                            <td className="px-4 py-3.5 text-right font-medium">${Number(budgetAllocated || 0).toLocaleString()}</td>
+                            <td className="px-4 py-3.5 text-right font-medium text-gray-600">${Number(budgetSpent || 0).toLocaleString()}</td>
                             <td className={`px-4 py-3.5 text-right font-bold ${balance >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                              ${balance.toLocaleString()}
+                              ${Number(balance || 0).toLocaleString()}
                             </td>
                             <td className="px-4 py-3.5 text-right">
                               <button
@@ -1113,6 +1118,13 @@ export default function ProjectDetails({ projectId, onBack, onEdit }: ProjectDet
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* WEEKLY SUMMARY TAB */}
+        {activeTab === 'weekly_summary' && (
+          <div className="space-y-6">
+            <WeeklyMeetingSummary projectId={projectId} />
           </div>
         )}
       </div>

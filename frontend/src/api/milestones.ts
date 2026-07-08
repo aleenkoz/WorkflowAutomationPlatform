@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { axiosInstance, getApiMode, getMockDb, saveMockDb } from './config';
+import { apiClient, getApiMode, getMockDb, saveMockDb } from './config';
 import { Milestone } from '../types';
 
 export const getMilestones = async (projectId: string): Promise<Milestone[]> => {
   if (getApiMode() === 'mock') {
     return getMockDb().milestones.filter((m) => m.project_id === projectId);
   }
-  const response = await axiosInstance.get<Milestone[]>(`/projects/${projectId}/milestones`);
+  const response = await apiClient.get<Milestone[]>(`/api/v1/projects/${projectId}/milestones`);
   return response.data;
 };
 
@@ -26,11 +26,11 @@ export const addMilestone = async (projectId: string, milestoneData: Omit<Milest
     saveMockDb(db);
     return newMilestone;
   }
-  const response = await axiosInstance.post<Milestone>(`/projects/${projectId}/milestones`, milestoneData);
+  const response = await apiClient.post<Milestone>(`/api/v1/projects/${projectId}/milestones`, milestoneData);
   return response.data;
 };
 
-export const toggleMilestone = async (milestoneId: string): Promise<Milestone> => {
+export const toggleMilestone = async (projectId: string | number, milestoneId: string): Promise<Milestone> => {
   if (getApiMode() === 'mock') {
     const db = getMockDb();
     const index = db.milestones.findIndex((m) => m.id === milestoneId);
@@ -39,16 +39,16 @@ export const toggleMilestone = async (milestoneId: string): Promise<Milestone> =
     saveMockDb(db);
     return db.milestones[index];
   }
-  const response = await axiosInstance.put<Milestone>(`/milestones/${milestoneId}/toggle`);
+  const response = await apiClient.put<Milestone>(`/api/v1/projects/${projectId}/milestones/${milestoneId}/toggle`);
   return response.data;
 };
 
-export const deleteMilestone = async (milestoneId: string): Promise<void> => {
+export const deleteMilestone = async (projectId: string | number, milestoneId: string): Promise<void> => {
   if (getApiMode() === 'mock') {
     const db = getMockDb();
     db.milestones = db.milestones.filter((m) => m.id !== milestoneId);
     saveMockDb(db);
     return;
   }
-  await axiosInstance.delete(`/milestones/${milestoneId}`);
+  await apiClient.delete(`/api/v1/projects/${projectId}/milestones/${milestoneId}`);
 };

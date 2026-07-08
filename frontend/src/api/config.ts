@@ -10,18 +10,33 @@ const API_BASE_KEY = 'construction_api_base_url';
 const API_MODE_KEY = 'construction_api_mode';
 const MOCK_DB_KEY = 'construction_mock_db';
 
-const DEFAULT_API_BASE = 'http://localhost:8000/api/v1';
+export const API_BASE_URL = 'http://localhost:8000';
+const DEFAULT_API_BASE = 'http://localhost:8000';
 
 export function getApiUrl(): string {
-  return localStorage.getItem(API_BASE_KEY) || DEFAULT_API_BASE;
+  if (!localStorage.getItem(API_BASE_KEY)) {
+    localStorage.setItem(API_BASE_KEY, DEFAULT_API_BASE);
+  }
+  let url = localStorage.getItem(API_BASE_KEY) || DEFAULT_API_BASE;
+  if (url.endsWith('/api/v1') || url.endsWith('/api/v1/')) {
+    url = url.replace(/\/api\/v1\/?$/, '');
+    localStorage.setItem(API_BASE_KEY, url);
+  }
+  return url;
 }
 
 export function setApiUrl(url: string) {
-  localStorage.setItem(API_BASE_KEY, url);
-  axiosInstance.defaults.baseURL = url;
+  let cleaned = url.trim();
+  if (cleaned.endsWith('/api/v1') || cleaned.endsWith('/api/v1/')) {
+    cleaned = cleaned.replace(/\/api\/v1\/?$/, '');
+  }
+  localStorage.setItem(API_BASE_KEY, cleaned);
 }
 
 export function getApiMode(): 'mock' | 'api' {
+  if (!localStorage.getItem(API_MODE_KEY)) {
+    localStorage.setItem(API_MODE_KEY, 'api');
+  }
   return (localStorage.getItem(API_MODE_KEY) as 'mock' | 'api') || 'api';
 }
 
@@ -29,9 +44,41 @@ export function setApiMode(mode: 'mock' | 'api') {
   localStorage.setItem(API_MODE_KEY, mode);
 }
 
-export const axiosInstance = axios.create({
-  baseURL: getApiUrl(),
+export function cleanUrl(url: string, _base?: string): string {
+  let cleanUrl = url;
+  
+  // Remove trailing slashes
+  if (cleanUrl.length > 1 && cleanUrl.endsWith('/')) {
+    cleanUrl = cleanUrl.replace(/\/+$/, '');
+  }
+  
+  // Collapse double slashes (taking care of :// protocol if absolute)
+  if (cleanUrl.includes('://')) {
+    const protocolIndex = cleanUrl.indexOf('://');
+    const protocol = cleanUrl.substring(0, protocolIndex + 3);
+    const rest = cleanUrl.substring(protocolIndex + 3).replace(/\/+/g, '/');
+    cleanUrl = protocol + rest;
+  } else {
+    cleanUrl = cleanUrl.replace(/\/+/g, '/');
+  }
+  
+  return cleanUrl;
+}
+
+export const apiClient = axios.create({
+  baseURL: DEFAULT_API_BASE,
 });
+
+apiClient.interceptors.request.use((config) => {
+  const currentBaseUrl = getApiUrl() || 'http://localhost:8000';
+  config.baseURL = currentBaseUrl.replace(/\/+$/, '');
+  if (config.url) {
+    config.url = cleanUrl(config.url);
+  }
+  return config;
+});
+
+export const axiosInstance = apiClient;
 
 // Prepopulated high-fidelity demo data
 const initialDb: MockDatabase = {

@@ -8,6 +8,7 @@ import ProjectsDashboard from './pages/ProjectsDashboard';
 import CreateProject from './pages/CreateProject';
 import ProjectView from './pages/ProjectView';
 import ProjectForm from './components/ProjectForm';
+import ApiSourceSwitcher from './components/ApiSourceSwitcher';
 import { updateProject } from './api/projects';
 import { Project } from './types';
 import { HardHat, User } from 'lucide-react';
@@ -59,6 +60,9 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Dynamic API Source switcher toggle */}
+            <ApiSourceSwitcher />
+
             {/* User profile identifier from metadata */}
             <div className="hidden sm:flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded text-xs font-semibold text-slate-200">
               <User className="h-3.5 w-3.5 text-slate-450" />

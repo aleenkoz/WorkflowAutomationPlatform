@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { detectRisks, getProjectsSummary } from '../api/ai';
+import { getApiMode } from '../api/config';
 import { RiskDetectionResponse, DetectedRisk, Project } from '../types';
 import { 
   Sparkles, 
@@ -30,14 +31,15 @@ interface AIIntelligenceCenterProps {
 export default function AIIntelligenceCenter({ onViewProject, projects }: AIIntelligenceCenterProps) {
   // AI Portfolio Summary States
   const [summary, setSummary] = useState<string | null>(() => {
-    return localStorage.getItem('construction_ai_summary');
+    return localStorage.getItem('construction_ai_summary_' + getApiMode());
   });
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
 
   // AI Email Risk Detection States
   const [risksData, setRisksData] = useState<RiskDetectionResponse | null>(() => {
-    const cached = localStorage.getItem('construction_ai_risks');
+    const cachedKey = 'construction_ai_risks_' + getApiMode();
+    const cached = localStorage.getItem(cachedKey);
     if (!cached) return null;
     try {
       const parsed = JSON.parse(cached);
@@ -47,13 +49,13 @@ export default function AIIntelligenceCenter({ onViewProject, projects }: AIInte
           (r: any) => !r.project_id || r.projectId !== undefined || r.emailId !== undefined
         );
         if (isStale) {
-          localStorage.removeItem('construction_ai_risks');
+          localStorage.removeItem(cachedKey);
           return null;
         }
       }
       return parsed;
     } catch {
-      localStorage.removeItem('construction_ai_risks');
+      localStorage.removeItem(cachedKey);
       return null;
     }
   });
@@ -74,7 +76,7 @@ export default function AIIntelligenceCenter({ onViewProject, projects }: AIInte
     try {
       const response = await getProjectsSummary();
       setSummary(response.summary);
-      localStorage.setItem('construction_ai_summary', response.summary);
+      localStorage.setItem('construction_ai_summary_' + getApiMode(), response.summary);
     } catch (err: any) {
       console.error(err);
       setSummaryError('AI module temporarily unavailable. Please verify the backend is active.');
@@ -90,7 +92,7 @@ export default function AIIntelligenceCenter({ onViewProject, projects }: AIInte
     try {
       const response = await detectRisks();
       setRisksData(response);
-      localStorage.setItem('construction_ai_risks', JSON.stringify(response));
+      localStorage.setItem('construction_ai_risks_' + getApiMode(), JSON.stringify(response));
     } catch (err: any) {
       console.error(err);
       setRisksError('AI risk detector temporarily unavailable. Please retry.');

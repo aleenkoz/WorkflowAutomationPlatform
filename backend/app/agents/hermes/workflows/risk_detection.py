@@ -1,8 +1,12 @@
 from ollama import chat
+from sqlalchemy.orm import Session
 from app.database.session import SessionLocal
+
 from app.models.generated_documents import GeneratedDocument
 from app.schemas.project_risks import ProjectRiskCreate
 from app.services.risk_detection_service import create_risk
+from app.services.memory_service import add_memory_entry
+
 
 def risk_to_dict(risk):
     return {
@@ -14,6 +18,7 @@ def risk_to_dict(risk):
         "description": risk.description,
         "detected_at": risk.detected_at.isoformat() if risk.detected_at else None
     }
+
 
 def analyze_email_for_risks(email_body: str):
     prompt = f"""
@@ -40,6 +45,7 @@ def analyze_email_for_risks(email_body: str):
 
     return response["message"]["content"]
 
+
 def parse_risk_output(analysis: str):
     lines = [line.strip() for line in analysis.split("\n") if line.strip()]
 
@@ -63,8 +69,9 @@ def parse_risk_output(analysis: str):
 
     return risk_type, severity, description
 
+
 def run_risk_detection():
-    db = SessionLocal()
+    db: Session = SessionLocal()
     emails = db.query(GeneratedDocument).all()
     results = []
 
@@ -80,14 +87,34 @@ def run_risk_detection():
             description=description
         )
 
+        # Create risk in DB
         saved = create_risk(db, risk_entry)
+
+        # Safety guard: skip if creation failed
+        if not saved:
+            continue
+
         results.append(saved)
 
-    clean_risks = [risk_to_dict(r) for r in results if r is not None]
+        # Store in enterprise memory
+        add_memory_entry(
+            db=db,
+            project_id=saved.project_id,
+            entry_type="risk",
+            content=saved.description,
+            source_id=saved.id,
+            source_type="risk",
+            meta={
+                "severity": saved.severity,
+                "email_id": saved.email_id,
+                "risk_type": saved.risk_type,
+            }
+        )
+
+    clean_risks = [risk_to_dict(r) for r in results]
 
     return {
-    "total_emails": len(emails),
-    "risks_detected": len(clean_risks),
-    "risks": clean_risks
+        "total_emails": len(emails),
+        "risks_detected": len(clean_risks),
+        "risks": clean_risks
     }
-
