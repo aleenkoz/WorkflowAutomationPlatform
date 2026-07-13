@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 
-DATABASE_URL = "postgresql+psycopg2://admin:admin@localhost:5432/workflow"
+DATABASE_URL = "postgresql+psycopg2://postgres:Aleen2006@localhost:5432/workflow"
 
 engine = create_engine(
     DATABASE_URL,
