@@ -11,4 +11,4 @@ router = APIRouter(
 
 @router.get("/{project_id}/risks")
 def get_project_risks(project_id: int, db: Session = Depends(get_db)):
-    return run_risk_detection(db, project_id)
+    return run_risk_detection()

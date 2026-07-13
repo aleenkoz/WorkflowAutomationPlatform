@@ -20,7 +20,7 @@ from app.services.milestones_service import get_milestones_by_project
 from app.services.budgets_service import get_budgets_by_project
 from app.services.issues_service import get_issues_by_project
 from app.services.decisions_service import get_decisions_by_project
-from app.agents.hermes.workflows import project_intelligence
+from app.agents.hermes.workflows.projects_intelligence import project_intelligence
 from app.agents.hermes.workflows.weekly_meetings_summary import weekly_meeting_summary
 
 
@@ -104,7 +104,7 @@ def get_project_decisions(project_id: int, db: Session = Depends(get_db)):
     return get_decisions_by_project(db, project_id)
 
 
-@router.get("/intelligence/{project_id}")
+@router.get("/{project_id}/intelligence")
 def get_project_intelligence(project_id: int, db: Session = Depends(get_db)):
     return project_intelligence(db, project_id)
 

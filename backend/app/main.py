@@ -21,7 +21,7 @@ from app.database.session import get_db
 # ---------------------------
 # Hermes Workflows
 # ---------------------------
-from app.agents.hermes.workflows.project_intelligence import project_intelligence
+from app.agents.hermes.workflows.projects_intelligence import project_intelligence
 
 
 # ---------------------------
