@@ -20,6 +20,8 @@ from app.services.milestones_service import get_milestones_by_project
 from app.services.budgets_service import get_budgets_by_project
 from app.services.issues_service import get_issues_by_project
 from app.services.decisions_service import get_decisions_by_project
+from app.agents.hermes.workflows import project_intelligence
+from app.agents.hermes.workflows.weekly_meetings_summary import weekly_meeting_summary
 
 
 router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
@@ -100,3 +102,12 @@ def get_project_issues(project_id: int, db: Session = Depends(get_db)):
 @router.get("/{project_id}/decisions", response_model=list[ProjectDecisionRead])
 def get_project_decisions(project_id: int, db: Session = Depends(get_db)):
     return get_decisions_by_project(db, project_id)
+
+
+@router.get("/intelligence/{project_id}")
+def get_project_intelligence(project_id: int, db: Session = Depends(get_db)):
+    return project_intelligence(db, project_id)
+
+@router.get("/{project_id}/weekly-summary")
+def get_weekly_summary(project_id: int, db: Session = Depends(get_db)):
+    return weekly_meeting_summary(db, project_id)

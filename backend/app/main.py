@@ -11,7 +11,8 @@ from app.api.v1.risk_detection import router as risk_router
 from app.api.v1.meetings import router as ai_meetings_router
 from app.api.v1.memory import router as memory_router
 from app.api.v1.chat import router as chat_router
-
+from app.api.v1.projects_risks import router as projects_risks_router
+from app.api.v1.project_memory import router as project_memory_router
 # ---------------------------
 # DB Session
 # ---------------------------
@@ -61,13 +62,13 @@ app.include_router(risk_router)
 app.include_router(ai_meetings_router)
 app.include_router(memory_router)
 app.include_router(chat_router)  
-
+app.include_router(projects_risks_router)
+app.include_router(project_memory_router)
 
 # ---------------------------
 # Project Intelligence Router
 # ---------------------------
-intelligence_router = APIRouter(prefix="/ai/projects", tags=["AI Projects"])
-
+intelligence_router = APIRouter(prefix="/api/v1/ai", tags=["AI Intelligence"])
 @intelligence_router.get("/intelligence/{project_id}")
 def get_project_intelligence(project_id: int, db: Session = Depends(get_db)):
     return project_intelligence(db, project_id)
