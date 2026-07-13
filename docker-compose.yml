@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  backend: 
+    build: .
+    container_name: workflow_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/workflow
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15
+    container_name: workflow
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Aleen2006
+      POSTGRES_DB: workflow
+    volumes:
+      - workflow_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    container_name: workflow_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  workflow_data:
