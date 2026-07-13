@@ -10,6 +10,7 @@ from app.api.v1.ai_copilot import router as ai_router
 from app.api.v1.risk_detection import router as risk_router
 from app.api.v1.meetings import router as ai_meetings_router
 from app.api.v1.memory import router as memory_router
+from app.api.v1.chat import router as chat_router
 
 # ---------------------------
 # DB Session
@@ -59,6 +60,7 @@ app.include_router(ai_router)
 app.include_router(risk_router)
 app.include_router(ai_meetings_router)
 app.include_router(memory_router)
+app.include_router(chat_router)  
 
 
 # ---------------------------
@@ -71,3 +73,4 @@ def get_project_intelligence(project_id: int, db: Session = Depends(get_db)):
     return project_intelligence(db, project_id)
 
 app.include_router(intelligence_router)
+

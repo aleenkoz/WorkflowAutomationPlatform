@@ -6,6 +6,9 @@
 import React, { useState, useEffect } from 'react';
 import { detectRisks, getProjectsSummary } from '../api/ai';
 import { getApiMode } from '../api/config';
+import { getMaterialPriceIntelligence, MaterialPriceIntelligenceResponse } from '../api/projectIntelligence';
+import MaterialPriceAlert from './MaterialPriceAlert';
+import ChatBox from './ChatBox';
 import { RiskDetectionResponse, DetectedRisk, Project } from '../types';
 import { 
   Sparkles, 
@@ -20,7 +23,8 @@ import {
   AlertTriangle,
   ExternalLink,
   X,
-  Info
+  Info,
+  MessageSquare
 } from 'lucide-react';
 
 interface AIIntelligenceCenterProps {
@@ -29,12 +33,44 @@ interface AIIntelligenceCenterProps {
 }
 
 export default function AIIntelligenceCenter({ onViewProject, projects }: AIIntelligenceCenterProps) {
+  // Chat Box States
+  const [showChatBox, setShowChatBox] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | number>(() => {
+    return projects[0]?.id || '';
+  });
+
+  // Sync selected project ID once projects list is available
+  useEffect(() => {
+    if (projects.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(projects[0].id);
+    }
+  }, [projects, selectedProjectId]);
+
   // AI Portfolio Summary States
   const [summary, setSummary] = useState<string | null>(() => {
     return localStorage.getItem('construction_ai_summary_' + getApiMode());
   });
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  // Material Price Alert States
+  const [priceAlert, setPriceAlert] = useState<MaterialPriceIntelligenceResponse | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
+
+  const handleAnalyzeMaterialPrices = async () => {
+    setPriceLoading(true);
+    setPriceError(null);
+    try {
+      const data = await getMaterialPriceIntelligence();
+      setPriceAlert(data);
+    } catch (err: any) {
+      console.error('Error fetching material price intelligence:', err);
+      setPriceError('Price intelligence momentarily unavailable. Please check API server.');
+    } finally {
+      setPriceLoading(false);
+    }
+  };
 
   // AI Email Risk Detection States
   const [risksData, setRisksData] = useState<RiskDetectionResponse | null>(() => {
@@ -164,13 +200,60 @@ export default function AIIntelligenceCenter({ onViewProject, projects }: AIInte
   return (
     <div className="space-y-6">
       {/* AI Intelligence Header Bar */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div className="flex items-center gap-2 flex-wrap">
           <Sparkles className="h-5 w-5 text-purple-600 animate-pulse" />
           <h2 className="text-lg font-bold text-slate-800">AI Intelligence Center</h2>
           <span className="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-bold uppercase rounded tracking-wider border border-purple-200">
             Hermes Engine Active
           </span>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+          {projects.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 h-9">
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Chat Context:</span>
+              <select
+                id="chat-project-context-select"
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-700 focus:outline-hidden cursor-pointer"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-white text-slate-850">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            id="open-chat-assistant-btn"
+            onClick={() => setShowChatBox(true)}
+            className="inline-flex items-center gap-2 h-9 px-4 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-250 text-xs font-bold text-purple-700 rounded transition-colors cursor-pointer shadow-2xs"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Open Chat Assistant
+          </button>
+
+          <div className="flex flex-col items-end gap-1">
+            <button
+              id="analyze-material-prices-btn"
+              onClick={handleAnalyzeMaterialPrices}
+              disabled={priceLoading}
+              className="inline-flex items-center gap-2 h-9 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-xs font-bold text-white rounded shadow-xs shadow-purple-100 transition-colors cursor-pointer"
+            >
+              <Sparkles className={`h-3.5 w-3.5 text-white ${priceLoading ? 'animate-spin' : ''}`} />
+              {priceLoading ? 'Analyzing Prices...' : 'Analyze Material Prices'}
+            </button>
+            {priceError && (
+              <span className="text-[10px] text-red-500 font-semibold flex items-center gap-1 mt-0.5">
+                <AlertCircle className="h-3 w-3" />
+                {priceError}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -450,6 +533,18 @@ export default function AIIntelligenceCenter({ onViewProject, projects }: AIInte
             </div>
           </div>
         </div>
+      )}
+
+      {priceAlert && (
+        <MaterialPriceAlert data={priceAlert} onClose={() => setPriceAlert(null)} />
+      )}
+
+      {showChatBox && (
+        <ChatBox 
+          projectId={selectedProjectId} 
+          projectName={projects.find(p => String(p.id) === String(selectedProjectId))?.name}
+          onClose={() => setShowChatBox(false)} 
+        />
       )}
     </div>
   );

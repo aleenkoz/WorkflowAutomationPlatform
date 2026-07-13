@@ -69,6 +69,9 @@ export const apiClient = axios.create({
   baseURL: DEFAULT_API_BASE,
 });
 
+apiClient.defaults.headers.post['Content-Type'] = 'application/json';
+apiClient.defaults.headers.common['Content-Type'] = 'application/json';
+
 apiClient.interceptors.request.use((config) => {
   const currentBaseUrl = getApiUrl() || 'http://localhost:8000';
   config.baseURL = currentBaseUrl.replace(/\/+$/, '');

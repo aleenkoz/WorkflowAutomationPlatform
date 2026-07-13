@@ -10,6 +10,29 @@ export interface ProjectIntelligenceResponse {
   updated_at: string;
 }
 
+export interface MaterialAnalysisItem {
+  material: string;
+  trend: string;
+  volatility: string;
+  predicted_change: 'increase' | 'decrease' | 'stable' | string;
+  confidence: number;
+  reason: string;
+}
+
+export interface SqlAlertItem {
+  material: string;
+  predicted_change: 'increase' | 'decrease' | 'stable' | string;
+  confidence: number;
+  reason: string;
+}
+
+export interface MaterialPriceIntelligenceResponse {
+  analysis: MaterialAnalysisItem[];
+  sql_alerts: SqlAlertItem[];
+  json?: any;
+  sql_executed: boolean;
+}
+
 const getMockIntelligence = (projectId: number | string, isRegen = false): ProjectIntelligenceResponse => {
   const db = getMockDb();
   const proj = db.projects.find(p => String(p.id) === String(projectId));
@@ -143,3 +166,69 @@ export async function regenerateProjectIntelligence(projectId: number | string):
 
   throw lastError || new Error(`Failed to regenerate project intelligence for project ${projectId}`);
 }
+
+export async function getMaterialPriceIntelligence(): Promise<MaterialPriceIntelligenceResponse> {
+  if (getApiMode() === 'mock') {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return {
+      analysis: [
+        {
+          material: "Copper Wire",
+          trend: "Upward trend due to high manufacturing demand",
+          volatility: "High",
+          predicted_change: "increase",
+          confidence: 0.76,
+          reason: "High volatility scores observed in recent global commodity trading indices combined with warehouse supply drawdowns across regional distribution nodes."
+        },
+        {
+          material: "Structural Steel",
+          trend: "Downward trend due to global oversupply",
+          volatility: "Medium",
+          predicted_change: "decrease",
+          confidence: 0.85,
+          reason: "Production capacity increases in domestic plants alongside lower-than-expected commercial construction demand are stabilizing steel prices downwards."
+        },
+        {
+          material: "Portland Cement",
+          trend: "Stable trading conditions",
+          volatility: "Low",
+          predicted_change: "stable",
+          confidence: 0.92,
+          reason: "Supplies are well-balanced against regional infrastructural schedules, keeping short-term prices stable."
+        }
+      ],
+      sql_alerts: [
+        {
+          material: "Copper Wire",
+          predicted_change: "increase",
+          confidence: 0.76,
+          reason: "High volatility scores observed in recent global commodity trading indices."
+        },
+        {
+          material: "Structural Steel",
+          predicted_change: "decrease",
+          confidence: 0.85,
+          reason: "Production capacity increases in domestic plants stabilizing steel prices downwards."
+        }
+      ],
+      json: {
+        timestamp: new Date().toISOString(),
+        model: "hermes-v2"
+      },
+      sql_executed: true
+    };
+  }
+
+  const response = await apiClient.post<any>('/api/v1/ai/materials/price-intelligence');
+  // Hermes returns a JSON string, let's parse it if it is a string
+  let data = response.data;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch (e) {
+      console.error('Failed to parse price intelligence response as JSON', e);
+    }
+  }
+  return data;
+}
+
