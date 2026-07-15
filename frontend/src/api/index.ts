@@ -53,11 +53,27 @@ export async function sendChatMessage(projectId: number | string, message: strin
 
   const numericId = getNumericProjectId(projectId);
   // POST /api/v1/chat with query parameters: project_id and message
-  const response = await apiClient.post<{ answer: string }>(
+  const response = await apiClient.post<any>(
     `/api/v1/chat?project_id=${numericId}&message=${encodeURIComponent(message)}`,
     {}
   );
-  return response.data;
+  
+  // Normalize the response text since the backend returns a raw text string
+  if (!response.data) {
+    return { answer: '' };
+  }
+  
+  if (typeof response.data === 'string') {
+    return { answer: response.data };
+  }
+  
+  if (typeof response.data === 'object') {
+    return { 
+      answer: response.data.answer || response.data.message || response.data.response || JSON.stringify(response.data) 
+    };
+  }
+  
+  return { answer: String(response.data) };
 }
 
 /**
