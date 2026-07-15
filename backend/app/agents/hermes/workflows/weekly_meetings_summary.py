@@ -7,6 +7,10 @@ from app.services.meetings_service import (
 )
 from app.services.memory_service import add_memory_entry
 
+""" Functions for Hermes to generate weekly meeting summaries for construction projects.
+Hermes analyzes the meetings held in the past week, identifies which expected meeting types
+were completed or are still missing, and generates a concise summary with recommendations for next steps. 
+The summary is stored in the enterprise memory layer for future reference. """
 
 def weekly_meeting_summary(db: Session, project_id: int):
     """

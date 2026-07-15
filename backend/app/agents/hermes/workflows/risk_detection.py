@@ -7,6 +7,9 @@ from app.schemas.project_risks import ProjectRiskCreate
 from app.services.risk_detection_service import create_risk
 from app.services.memory_service import add_memory_entry
 
+""" Functions for Hermes to detect risks in construction project communications. 
+Hermes analyzes emails and other documents to identify potential risks,
+categorizes them, and stores them in the enterprise memory layer for future reference. """
 
 def risk_to_dict(risk):
     return {

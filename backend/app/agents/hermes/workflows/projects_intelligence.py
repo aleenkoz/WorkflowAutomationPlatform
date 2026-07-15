@@ -4,6 +4,9 @@ from ollama import chat
 
 from app.services.memory_service import add_memory_entry, search_memory
 
+"""
+Functions for Hermes to access context of a specific project, 
+then provide a high-level intelligence summary and recommendations."""
 
 def project_intelligence(db: Session, project_id: int) -> dict:
     """

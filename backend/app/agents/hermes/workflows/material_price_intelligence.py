@@ -5,6 +5,10 @@ from app.services.material_price_service import (
 )
 from ollama import chat
 import json
+"""
+Functions for Hermes to analyze material price trends and generate alerts.
+By accessing recent material price data, Hermes can provide insights on 
+potential price changes and generate SQL alerts for the system."""
 
 def extract_first_json_block(text: str):
     """

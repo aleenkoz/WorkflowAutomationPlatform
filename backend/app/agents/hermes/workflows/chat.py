@@ -3,6 +3,10 @@ import json
 from ollama import chat
 from app.services.memory_service import get_relevant_memory, store_chat_memory
 
+""" Functions for Hermes to interact directly with users
+and reply to their questions using relevant memory and context
+about a specific project. """
+
 CHAT_PROMPT = """
 You are Hermes, an AI assistant for a construction intelligence platform.
 

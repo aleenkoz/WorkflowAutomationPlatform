@@ -4,6 +4,9 @@ from ollama import chat
 from app.agents.hermes.tools.projects_tools import fetch_active_or_on_hold_projects
 from app.services.memory_service import add_memory_entry
 
+""" Functions for Hermes to summarize all active or on-hold projects in the system.
+Providing a high-level overview of the current project portfolio, highlighting risks, delays, and coordination issues. 
+Aimed at busy personnel who need a quick understanding of the overall project landscape."""
 
 def summarize_active_projects(db: Session):
     """

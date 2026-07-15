@@ -4,6 +4,10 @@ from sqlalchemy import func
 from app.models.projects import Project
 from app.models.meetings import Meeting
 
+"""
+Tools for functions that interact with the database, 
+specifically for projects and meetings.
+"""
 
 def fetch_active_or_on_hold_projects(db: Session):
     """
