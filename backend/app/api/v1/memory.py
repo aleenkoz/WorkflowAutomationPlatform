@@ -12,13 +12,10 @@ from app.services.memory_service import (
 )
 from app.schemas.memory import MemoryEntryRead
 
-# IMPORTANT: This must match the frontend
 router = APIRouter(prefix="/api/v1/memory", tags=["Memory"])
 
 
-# ---------------------------------------------------------
-# Search project memory
-# ---------------------------------------------------------
+
 @router.get("/search/{project_id}", response_model=List[MemoryEntryRead])
 def search_project_memory(
     project_id: int,
@@ -29,9 +26,7 @@ def search_project_memory(
     return search_memory(db, project_id, query=q, entry_type=entry_type)
 
 
-# ---------------------------------------------------------
-# Store chat interaction (JSON body)
-# ---------------------------------------------------------
+
 
 class ChatStoreRequest(BaseModel):
     project_id: int
@@ -52,9 +47,7 @@ def store_chat_interaction(
     )
 
 
-# ---------------------------------------------------------
-# Get relevant memory for chat context
-# ---------------------------------------------------------
+
 @router.get("/chat/relevant/{project_id}", response_model=List[str])
 def get_chat_relevant_memory(
     project_id: int,
@@ -70,9 +63,7 @@ def get_chat_relevant_memory(
     )
 
 
-# ---------------------------------------------------------
-# Get recent memory entries
-# ---------------------------------------------------------
+
 @router.get("/chat/recent/{project_id}", response_model=List[str])
 def get_chat_recent_memory(
     project_id: int,
@@ -88,9 +79,7 @@ def get_chat_recent_memory(
     )
 
 
-# ---------------------------------------------------------
-# Get all chat interactions
-# ---------------------------------------------------------
+
 @router.get("/chat/all/{project_id}", response_model=List[MemoryEntryRead])
 def get_all_chat_interactions(
     project_id: int,
