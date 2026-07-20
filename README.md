@@ -51,6 +51,8 @@ Results appear on the interface.
 					db.py
 					projects_tools.py
 				/workflows
+					chat.py
+					material_price_intelligence.py
 					project_intelligence.py
 					risk_detection.py
 					summarize_active_projects.py
@@ -59,17 +61,24 @@ Results appear on the interface.
 		/api
 			/v1
 				ai_copilot.py
+				chat.py
+				material_intelligence.py
 				meetings.py
 				memory.py
+				project_memory.py
+				projects_risks.py
 				projects.py	
+				risk_detection.py
 		/database
 			base.py
 			session.py
 		/models
 			__init__.py
 			generated_documents.py
+			material_prices.py
 			meetings.py
 			memory.py
+			price_change_alerts.py
 			project_budgets.py
 			project_decisions.py
 			project_issues.py
@@ -91,9 +100,11 @@ Results appear on the interface.
 			budgets_service.py
 			decisions_service.py
 			issues_service.py
+			material_price_service.py
 			meetings_service.py
 			memory_service.py
 			milestones_service.py
+			phases_service.py
 			projects_service.py
 			risk_detection_service.py
 		main.py
@@ -150,6 +161,7 @@ Results appear on the interface.
 docker-compose.yml
 package-lock.json
 README.md
+			
 ```
 
 ## ⚙️ How it works: 

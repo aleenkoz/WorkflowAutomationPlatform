@@ -1,35 +1,27 @@
 version: "3.9"
 
 services:
-  backend: 
-    build: .
-    container_name: workflow_backend
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/workflow
-      REDIS_URL: redis://redis:6379/0
-    depends_on:
-      - db
-      - redis
+      OLLAMA_HOST: "http://host.docker.internal:11434"
+      env_file: - ./backend/.env
 
-  db:
-    image: postgres:15
-    container_name: workflow
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Aleen2006
-      POSTGRES_DB: workflow
     volumes:
-      - workflow_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - ./backend:/app
+    depends_on:
+      - ollama
 
-  redis:
-    image: redis:7
-    container_name: workflow_redis
+  ollama:
+    image: ollama/ollama:latest
     ports:
-      - "6379:6379"
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
 
 volumes:
-  workflow_data:
+  ollama:

@@ -41,9 +41,6 @@ def search_memory(
     return q.order_by(MemoryEntry.created_at.desc()).all()
 
 
-# ============================================================
-# ⭐ NEW FUNCTIONS (ADDED ONLY — NO CHANGES TO EXISTING CODE)
-# ============================================================
 
 def get_recent_memory(
     db: Session,
