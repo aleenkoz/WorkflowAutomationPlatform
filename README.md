@@ -1,5 +1,3 @@
-# WorkflowAutomationPlatform
-
 #  🧩 Workflow Automation platform:
 A platform developed for contracting and construction companies to automate some workflows some employees put the time 
 to manually do. The platform uses the AI agent: Hermes, to easily, effectively, and quickly automate workflows.  
@@ -13,11 +11,13 @@ to manually do. The platform uses the AI agent: Hermes, to easily, effectively, 
 - Detecting projects' risks by reading emails. 
 - Providing a project intelligence analysis on a project. 
 - Generating a weekly summary of weekly meetings. 
+- Detecting and alerting when materials' prices change.
+- Communicating a project details through a chatbot.  
 - Storing all relevant information on the system memory layer for future improvements. 
 
 ## AI Usage: 
 -  🤖 Hermes:  
-Hermes agent was used to automate workflows, view project details, read emails, and generate corresponding reports. 
+Hermes agent was used to automate workflows, view project details, read emails, check prices, and generate corresponding reports. 
 - 💻 Code Generation:  
 Copilot chatbot was used in many instances to generate code, and debugging errors. 
 Google AI studio was uesd to generate the frontend layer of the system.  
@@ -161,7 +161,6 @@ Results appear on the interface.
 docker-compose.yml
 package-lock.json
 README.md
-			
 ```
 
 ## ⚙️ How it works: 
@@ -172,6 +171,8 @@ through the interface.
 2- Analyze database: 
 Read and analyze projects' details, meetings information, and emails. Then prompt Hermes to understand them and generate
 summaries and reports when requested by the user. 
+
+- Reports available to be generated: Weekly meeting summary, on-hold/Active projects summary, projects' risk detection, projects' intelligence, and material prices change report. 
 
 Prompt example: 
 ```text
